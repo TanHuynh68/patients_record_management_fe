@@ -38,24 +38,26 @@ const DashboardPage = () => {
 
   const getPatients = async () => {
     try {
-      setLoading(false)
       const res = await axios.get(`${env.BE_URL}/patients`)
       console.log("yes")
       if (res) {
         setData(res.data.data)
       }
-      setLoading(false)
     } catch (error) {
-      setLoading(false)
       console.error("Get patients error:", error)
+    } finally {
+      setLoading(false)
     }
   }
 
-  return loading ? (
-    <div className="flex min-h-screen items-center justify-center">
-      <Spinner />
-    </div>
-  ) : (
+  if (loading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center">
+        <Spinner />
+      </div>
+    )
+  }
+  return (
     <SidebarProvider
       style={
         {
@@ -73,10 +75,7 @@ const DashboardPage = () => {
               <div className="px-4 lg:px-6">
                 <ChartAreaInteractive patients={data} />
               </div>
-              <DataTable
-                data={data}
-                getPatients={getPatients}
-              />
+              <DataTable data={data} getPatients={getPatients} />
             </div>
           </div>
         </div>
