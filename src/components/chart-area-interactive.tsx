@@ -25,10 +25,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import {
-  ToggleGroup,
-  ToggleGroupItem,
-} from "@/components/ui/toggle-group"
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group"
 import type { IPatient } from "./data-table"
 
 export const description = "An interactive area chart"
@@ -61,7 +58,7 @@ export const description = "An interactive area chart"
 //   { date: "2024-05-31", desktop: 178, mobile: 230 },
 //   { date: "2024-06-01", desktop: 178, mobile: 200 },
 //   { date: "2024-06-02", desktop: 470, mobile: 410 },
- 
+
 // ]
 
 const chartConfig = {
@@ -71,27 +68,26 @@ const chartConfig = {
   },
 } satisfies ChartConfig
 
-export function ChartAreaInteractive({patients}: {patients: IPatient[]}) {
-
+export function ChartAreaInteractive({ patients }: { patients: IPatient[] }) {
   const statistics = Object.values(
-  patients.reduce<Record<string, { date: string; patients: number }>>(
-    (acc, patient) => {
-      const date = patient.createdAt.split("T")[0]
+    patients.reduce<Record<string, { date: string; patients: number }>>(
+      (acc, patient) => {
+        const date = patient.createdAt.split("T")[0]
 
-      if (!acc[date]) {
-        acc[date] = {
-          date,
-          patients: 0,
+        if (!acc[date]) {
+          acc[date] = {
+            date,
+            patients: 0,
+          }
         }
-      }
 
-      acc[date].patients += 1
+        acc[date].patients += 1
 
-      return acc
-    },
-    {}
-  )
-).sort((a, b) => a.date.localeCompare(b.date))
+        return acc
+      },
+      {}
+    )
+  ).sort((a, b) => a.date.localeCompare(b.date))
   const isMobile = useIsMobile()
   const [timeRange, setTimeRange] = React.useState("90d")
 
@@ -100,7 +96,7 @@ export function ChartAreaInteractive({patients}: {patients: IPatient[]}) {
       setTimeRange("7d")
     }
   }, [isMobile])
-  console.log('statistics: ', statistics)
+  console.log("statistics: ", statistics)
   const filteredData = statistics.filter((item) => {
     const date = new Date(item.date)
     const referenceDate = new Date()
@@ -118,12 +114,12 @@ export function ChartAreaInteractive({patients}: {patients: IPatient[]}) {
   return (
     <Card className="@container/card">
       <CardHeader>
-        <CardTitle>Total Visitors</CardTitle>
+        <CardTitle>Tổng số hồ sơ bệnh nhân</CardTitle>
         <CardDescription>
           <span className="hidden @[540px]/card:block">
-            Total for the last 3 months
+            Tổng hồ sơ cho 3 tháng gần nhất
           </span>
-          <span className="@[540px]/card:hidden">Last 3 months</span>
+          <span className="@[540px]/card:hidden">3 tháng gần đây</span>
         </CardDescription>
         <CardAction>
           <ToggleGroup
@@ -135,9 +131,9 @@ export function ChartAreaInteractive({patients}: {patients: IPatient[]}) {
             variant="outline"
             className="hidden *:data-[slot=toggle-group-item]:px-4! @[767px]/card:flex"
           >
-            <ToggleGroupItem value="90d">Last 3 months</ToggleGroupItem>
-            <ToggleGroupItem value="30d">Last 30 days</ToggleGroupItem>
-            <ToggleGroupItem value="7d">Last 7 days</ToggleGroupItem>
+            <ToggleGroupItem value="90d">3 tháng gần đây</ToggleGroupItem>
+            <ToggleGroupItem value="30d">30 ngày gần đây</ToggleGroupItem>
+            <ToggleGroupItem value="7d">7 ngày gần đây</ToggleGroupItem>
           </ToggleGroup>
           <Select
             value={timeRange}
@@ -156,13 +152,13 @@ export function ChartAreaInteractive({patients}: {patients: IPatient[]}) {
             </SelectTrigger>
             <SelectContent className="rounded-xl">
               <SelectItem value="90d" className="rounded-lg">
-                Last 3 months
+                3 tháng gần đây
               </SelectItem>
               <SelectItem value="30d" className="rounded-lg">
-                Last 30 days
+                30 ngày gần đây
               </SelectItem>
               <SelectItem value="7d" className="rounded-lg">
-                Last 7 days
+                7 ngày gần đây
               </SelectItem>
             </SelectContent>
           </Select>
@@ -209,9 +205,9 @@ export function ChartAreaInteractive({patients}: {patients: IPatient[]}) {
               minTickGap={32}
               tickFormatter={(value) => {
                 const date = new Date(value)
-                return date.toLocaleDateString("en-US", {
-                  month: "short",
-                  day: "numeric",
+                return date.toLocaleDateString("vi-VN", {
+                  month: "2-digit",
+                  day: "2-digit",
                 })
               }}
             />
@@ -229,11 +225,11 @@ export function ChartAreaInteractive({patients}: {patients: IPatient[]}) {
                 />
               }
             />
-           <Area
-  dataKey="patients"
-  fill="url(#fillPatients)"
-  stroke="var(--color-patients)"
-/>
+            <Area
+              dataKey="patients"
+              fill="url(#fillPatients)"
+              stroke="var(--color-patients)"
+            />
           </AreaChart>
         </ChartContainer>
       </CardContent>

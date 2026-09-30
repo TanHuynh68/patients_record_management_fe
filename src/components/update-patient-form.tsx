@@ -1,4 +1,4 @@
-
+"use client"
 import { useEffect, useState, type FormEvent } from "react"
 import { PencilIcon } from "lucide-react"
 import axios from "axios"
@@ -62,7 +62,6 @@ type Patient = {
   }
 }
 
-
 const phonePattern = /^(0|\+84)(3|5|7|8|9)\d{8}$/
 
 function toDateInputValue(date: string | Date | undefined) {
@@ -117,27 +116,30 @@ function validate(values: FormValues): Errors {
 }
 
 export function UpdatePatientFormDialog({
+  open,
+  onOpenChange,
   fetchPatients,
   dataUpdate,
 }: {
+  open: boolean
+  onOpenChange: (open: boolean) => void
   fetchPatients: () => Promise<void>
   dataUpdate: Patient
 }) {
-  const [open, setOpen] = useState(false)
-  const [values, setValues] = useState<FormValues>(() => toFormValues(dataUpdate))
+  const [values, setValues] = useState<FormValues>(() =>
+    toFormValues(dataUpdate)
+  )
   const [errors, setErrors] = useState<Errors>({})
   const [isSubmitting, setIsSubmitting] = useState(false)
 
   useEffect(() => {
-    console.log("dataUpdate changed:", dataUpdate)
-    if (open) {
-      setValues(toFormValues(dataUpdate))
-      setErrors({})
-    }
-  }, [dataUpdate, open])
+    if (!open) return
+    setValues(toFormValues(dataUpdate))
+    setErrors({})
+  }, [dataUpdate._id, open])
 
   function update(field: keyof FormValues, value: string) {
-     console.log("UPDATE:", field, value)
+    console.log("UPDATE:", field, value)
     setValues((current) => ({ ...current, [field]: value }))
     setErrors((current) => ({ ...current, [field]: undefined }))
   }
@@ -163,12 +165,17 @@ export function UpdatePatientFormDialog({
         },
       }
 
-      const response = await axios.patch(`${env.BE_URL}/patients/${dataUpdate._id}`, data)
-      console.log('response: ', response)
+      const response = await axios.patch(
+        `${env.BE_URL}/patients/${dataUpdate._id}`,
+        data
+      )
+      console.log("response: ", response)
       if (response && response.data.success) {
         await fetchPatients()
-        setOpen(false)
-        toast.add({ title: response.data?.message ?? "Cập nhật bệnh nhân thành công." })
+        onOpenChange(false)
+        toast.add({
+          title: response.data?.message ?? "Cập nhật bệnh nhân thành công.",
+        })
       }
     } catch {
       toast.add({ title: "Không thể cập nhật bệnh nhân. Vui lòng thử lại." })
@@ -178,19 +185,13 @@ export function UpdatePatientFormDialog({
   }
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger
-        render={
-          <Button variant="outline" size="sm">
-            <PencilIcon data-icon="inline-start" />
-            <span className="hidden lg:inline">Chỉnh sửa</span>
-          </Button>
-        }
-      />
+    <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-2xl">
         <DialogHeader>
           <DialogTitle>Chỉnh sửa bệnh nhân</DialogTitle>
-          <DialogDescription>Cập nhật đầy đủ thông tin bệnh nhân.</DialogDescription>
+          <DialogDescription>
+            Cập nhật đầy đủ thông tin bệnh nhân.
+          </DialogDescription>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} noValidate>
@@ -200,18 +201,40 @@ export function UpdatePatientFormDialog({
               <FieldGroup className="grid gap-4 sm:grid-cols-2">
                 <Field data-invalid={!!errors.fullName}>
                   <FieldLabel htmlFor="fullName">Họ và tên *</FieldLabel>
-                  <Input id="fullName" value={values.fullName} onChange={(event) => update("fullName", event.target.value)} aria-invalid={!!errors.fullName} />
+                  <Input
+                    id="fullName"
+                    value={values.fullName}
+                    onChange={(event) => update("fullName", event.target.value)}
+                    aria-invalid={!!errors.fullName}
+                  />
                   <FieldError>{errors.fullName}</FieldError>
                 </Field>
                 <Field data-invalid={!!errors.dateOfBirth}>
                   <FieldLabel htmlFor="dateOfBirth">Ngày sinh *</FieldLabel>
-                  <Input id="dateOfBirth" type="date" value={values.dateOfBirth} onChange={(event) => update("dateOfBirth", event.target.value)} aria-invalid={!!errors.dateOfBirth} />
+                  <Input
+                    id="dateOfBirth"
+                    type="date"
+                    value={values.dateOfBirth}
+                    onChange={(event) =>
+                      update("dateOfBirth", event.target.value)
+                    }
+                    aria-invalid={!!errors.dateOfBirth}
+                  />
                   <FieldError>{errors.dateOfBirth}</FieldError>
                 </Field>
                 <Field data-invalid={!!errors.gender}>
                   <FieldLabel htmlFor="gender">Giới tính *</FieldLabel>
-                  <Select value={values.gender} onValueChange={(value) => update("gender", value ?? "")}>
-                    <SelectTrigger id="gender" className="w-full" aria-invalid={!!errors.gender}><SelectValue placeholder="Chọn giới tính" /></SelectTrigger>
+                  <Select
+                    value={values.gender}
+                    onValueChange={(value) => update("gender", value ?? "")}
+                  >
+                    <SelectTrigger
+                      id="gender"
+                      className="w-full"
+                      aria-invalid={!!errors.gender}
+                    >
+                      <SelectValue placeholder="Chọn giới tính" />
+                    </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="MALE">Nam</SelectItem>
                       <SelectItem value="FEMALE">Nữ</SelectItem>
@@ -222,12 +245,27 @@ export function UpdatePatientFormDialog({
                 </Field>
                 <Field data-invalid={!!errors.phone}>
                   <FieldLabel htmlFor="phone">Số điện thoại *</FieldLabel>
-                  <Input id="phone" type="tel" value={values.phone} onChange={(event) => update("phone", event.target.value)} aria-invalid={!!errors.phone} />
+                  <Input
+                    id="phone"
+                    type="tel"
+                    value={values.phone}
+                    onChange={(event) => update("phone", event.target.value)}
+                    aria-invalid={!!errors.phone}
+                  />
                   <FieldError>{errors.phone}</FieldError>
                 </Field>
-                <Field data-invalid={!!errors.address} className="sm:col-span-2">
+                <Field
+                  data-invalid={!!errors.address}
+                  className="sm:col-span-2"
+                >
                   <FieldLabel htmlFor="address">Địa chỉ *</FieldLabel>
-                  <Textarea id="address" value={values.address} onChange={(event) => update("address", event.target.value)} aria-invalid={!!errors.address} rows={2} />
+                  <Textarea
+                    id="address"
+                    value={values.address}
+                    onChange={(event) => update("address", event.target.value)}
+                    aria-invalid={!!errors.address}
+                    rows={2}
+                  />
                   <FieldError>{errors.address}</FieldError>
                 </Field>
               </FieldGroup>
@@ -237,18 +275,44 @@ export function UpdatePatientFormDialog({
               <FieldLegend>Người liên hệ khẩn cấp</FieldLegend>
               <FieldGroup className="grid gap-4 sm:grid-cols-2">
                 <Field data-invalid={!!errors.emergencyFullName}>
-                  <FieldLabel htmlFor="emergencyFullName">Họ và tên *</FieldLabel>
-                  <Input id="emergencyFullName" value={values.emergencyFullName} onChange={(event) => update("emergencyFullName", event.target.value)} aria-invalid={!!errors.emergencyFullName} />
+                  <FieldLabel htmlFor="emergencyFullName">
+                    Họ và tên *
+                  </FieldLabel>
+                  <Input
+                    id="emergencyFullName"
+                    value={values.emergencyFullName}
+                    onChange={(event) =>
+                      update("emergencyFullName", event.target.value)
+                    }
+                    aria-invalid={!!errors.emergencyFullName}
+                  />
                   <FieldError>{errors.emergencyFullName}</FieldError>
                 </Field>
                 <Field data-invalid={!!errors.emergencyPhone}>
-                  <FieldLabel htmlFor="emergencyPhone">Số điện thoại *</FieldLabel>
-                  <Input id="emergencyPhone" type="tel" value={values.emergencyPhone} onChange={(event) => update("emergencyPhone", event.target.value)} aria-invalid={!!errors.emergencyPhone} />
+                  <FieldLabel htmlFor="emergencyPhone">
+                    Số điện thoại *
+                  </FieldLabel>
+                  <Input
+                    id="emergencyPhone"
+                    type="tel"
+                    value={values.emergencyPhone}
+                    onChange={(event) =>
+                      update("emergencyPhone", event.target.value)
+                    }
+                    aria-invalid={!!errors.emergencyPhone}
+                  />
                   <FieldError>{errors.emergencyPhone}</FieldError>
                 </Field>
                 <Field data-invalid={!!errors.relationship}>
                   <FieldLabel htmlFor="relationship">Mối quan hệ *</FieldLabel>
-                  <Input id="relationship" value={values.relationship} onChange={(event) => update("relationship", event.target.value)} aria-invalid={!!errors.relationship} />
+                  <Input
+                    id="relationship"
+                    value={values.relationship}
+                    onChange={(event) =>
+                      update("relationship", event.target.value)
+                    }
+                    aria-invalid={!!errors.relationship}
+                  />
                   <FieldError>{errors.relationship}</FieldError>
                 </Field>
               </FieldGroup>
@@ -256,8 +320,16 @@ export function UpdatePatientFormDialog({
           </FieldGroup>
 
           <DialogFooter className="mt-6">
-            <Button type="button" variant="outline" onClick={() => setOpen(false)}>Hủy</Button>
-            <Button type="submit" disabled={isSubmitting}>{isSubmitting ? "Đang cập nhật..." : "Cập nhật bệnh nhân"}</Button>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => onOpenChange(false)}
+            >
+              Hủy
+            </Button>
+            <Button type="submit" disabled={isSubmitting}>
+              {isSubmitting ? "Đang cập nhật..." : "Cập nhật bệnh nhân"}
+            </Button>
           </DialogFooter>
         </form>
       </DialogContent>

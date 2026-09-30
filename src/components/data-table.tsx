@@ -157,8 +157,6 @@ export const schema = z.object({
 
 type Patient = z.infer<typeof schema>
 
-
-
 function DragHandle({ id }: { id: string }) {
   const { attributes, listeners } = useSortable({ id })
 
@@ -175,8 +173,6 @@ function DragHandle({ id }: { id: string }) {
     </Button>
   )
 }
-
-
 
 function DraggableRow({ row }: { row: Row<typeof features, Patient> }) {
   const { transform, transition, setNodeRef, isDragging } = useSortable({
@@ -204,134 +200,155 @@ function DraggableRow({ row }: { row: Row<typeof features, Patient> }) {
 }
 export function DataTable({
   data: initialData,
-  getPatients
+  getPatients,
 }: {
-  data: z.infer<typeof schema>[],
+  data: z.infer<typeof schema>[]
   getPatients: any
 }) {
-  
-  const handleDelete = async (id: string)=>{
-  const res = await axios.delete(env.BE_URL+'/patients/'+id)
-  if(res && res.data.success){
-    toast.add({title: res.data.message})
-    getPatients();
+  const [openEdit, setOpenEdit] = React.useState(false)
+  const handleDelete = async (id: string) => {
+    const res = await axios.delete(env.BE_URL + "/patients/" + id)
+    if (res && res.data.success) {
+      toast.add({ title: res.data.message })
+      getPatients()
+    }
   }
-}
 
   const columns = columnHelper.columns([
-  columnHelper.display({
-    id: "drag",
-    header: () => null,
-    cell: ({ row }) => <DragHandle id={row.original._id} />,
-  }),
-  columnHelper.display({
-    id: "select",
-    header: ({ table }) => (
-      <div className="flex items-center justify-center">
-        <Checkbox
-          checked={table.getIsAllPageRowsSelected()}
-          indeterminate={
-            table.getIsSomePageRowsSelected() &&
-            !table.getIsAllPageRowsSelected()
-          }
-          onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
-          aria-label="Select all patients"
-        />
-      </div>
-    ),
-    cell: ({ row }) => (
-      <div className="flex items-center justify-center">
-        <Checkbox
-          checked={row.getIsSelected()}
-          onCheckedChange={(value) => row.toggleSelected(!!value)}
-          aria-label={`Select ${row.original.fullName}`}
-        />
-      </div>
-    ),
-    enableSorting: false,
-    enableHiding: false,
-  }),
-  columnHelper.accessor("patientCode", {
-    header: "Mã bệnh nhân",
-  }),
-  columnHelper.accessor("fullName", {
-    header: "Tên đầy đủ",
-    cell: ({ row }) => <TableCellViewer item={row.original} />,
-    enableHiding: false,
-  }),
-  columnHelper.accessor("dateOfBirth", {
-    header: "Ngày sinh",
-    cell: ({ row }) =>
-      new Date(row.original.dateOfBirth).toLocaleDateString("vi-VN"),
-  }),
-  columnHelper.accessor("gender", {
-    header: "Giới tính",
-    cell: ({ row }) => (
-      <Badge variant="outline">
-        {row.original.gender === "MALE"
-          ? "Nam"
-          : row.original.gender === "FEMALE"
-            ? "Nữ"
-            : "Other"}
-      </Badge>
-    ),
-  }),
-  columnHelper.accessor("phone", {
-    header: "Số điện thoại",
-    cell: ({ row }) => row.original.phone || "—",
-  }),
-  columnHelper.accessor("address", {
-    header: "Địa chỉ",
-    cell: ({ row }) => row.original.address || "—",
-  }),
-  columnHelper.display({
-    id: "emergencyContact",
-    header: "Liên hệ khẩn cấp",
-    cell: ({ row }) => {
-      const contact = row.original.emergencyContact
-      return contact ? (
-        <div>
-          <div>{contact.fullName}</div>
-          <div className="text-xs text-muted-foreground">
-            {contact.phone}
-            {contact.relationship ? ` · ${contact.relationship}` : ""}
-          </div>
+    columnHelper.display({
+      id: "drag",
+      header: () => null,
+      cell: ({ row }) => <DragHandle id={row.original._id} />,
+    }),
+    columnHelper.display({
+      id: "select",
+      header: ({ table }) => (
+        <div className="flex items-center justify-center">
+          <Checkbox
+            checked={table.getIsAllPageRowsSelected()}
+            indeterminate={
+              table.getIsSomePageRowsSelected() &&
+              !table.getIsAllPageRowsSelected()
+            }
+            onCheckedChange={(value) =>
+              table.toggleAllPageRowsSelected(!!value)
+            }
+            aria-label="Select all patients"
+          />
         </div>
-      ) : (
-        "—"
-      )
-    },
-  }),
-  columnHelper.accessor("createdAt", {
-    header: "Ngày tạo",
-    cell: ({ row }) =>
-      new Date(row.original.createdAt).toLocaleDateString("vi-VN"),
-  }),
-  columnHelper.display({
-    id: "actions",
-    cell: ({ row }) => (
-      <DropdownMenu>
-        <DropdownMenuTrigger
-          render={
-            <Button
-              variant="ghost"
-              size="icon"
-              className="flex size-8 text-muted-foreground data-open:bg-muted"
-            />
-          }
-        >
-          <DotsThreeVerticalIcon />
-          <span className="sr-only">Open menu</span>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="end" className="w-32">
-          <UpdatePatientFormDialog fetchPatients={getPatients} dataUpdate={row.original}/>
-          <DropdownMenuSeparator />
-          <DropdownMenuItem onClick={()=>handleDelete(row.original._id)} variant="destructive">Xoá</DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>
-    ),
-  }),
-])
+      ),
+      cell: ({ row }) => (
+        <div className="flex items-center justify-center">
+          <Checkbox
+            checked={row.getIsSelected()}
+            onCheckedChange={(value) => row.toggleSelected(!!value)}
+            aria-label={`Select ${row.original.fullName}`}
+          />
+        </div>
+      ),
+      enableSorting: false,
+      enableHiding: false,
+    }),
+    columnHelper.accessor("patientCode", {
+      header: "Mã bệnh nhân",
+    }),
+    columnHelper.accessor("fullName", {
+      header: "Tên đầy đủ",
+      cell: ({ row }) => <TableCellViewer item={row.original} />,
+      enableHiding: false,
+    }),
+    columnHelper.accessor("dateOfBirth", {
+      header: "Ngày sinh",
+      cell: ({ row }) =>
+        new Date(row.original.dateOfBirth).toLocaleDateString("vi-VN"),
+    }),
+    columnHelper.accessor("gender", {
+      header: "Giới tính",
+      cell: ({ row }) => (
+        <Badge variant="outline">
+          {row.original.gender === "MALE"
+            ? "Nam"
+            : row.original.gender === "FEMALE"
+              ? "Nữ"
+              : "Other"}
+        </Badge>
+      ),
+    }),
+    columnHelper.accessor("phone", {
+      header: "Số điện thoại",
+      cell: ({ row }) => row.original.phone || "—",
+    }),
+    columnHelper.accessor("address", {
+      header: "Địa chỉ",
+      cell: ({ row }) => row.original.address || "—",
+    }),
+    columnHelper.display({
+      id: "emergencyContact",
+      header: "Liên hệ khẩn cấp",
+      cell: ({ row }) => {
+        const contact = row.original.emergencyContact
+        return contact ? (
+          <div>
+            <div>{contact.fullName}</div>
+            <div className="text-xs text-muted-foreground">
+              {contact.phone}
+              {contact.relationship ? ` · ${contact.relationship}` : ""}
+            </div>
+          </div>
+        ) : (
+          "—"
+        )
+      },
+    }),
+    columnHelper.accessor("createdAt", {
+      header: "Ngày tạo",
+      cell: ({ row }) =>
+        new Date(row.original.createdAt).toLocaleDateString("vi-VN"),
+    }),
+    columnHelper.display({
+      id: "actions",
+      cell: ({ row }) => (
+        <>
+  <DropdownMenu>
+    <DropdownMenuTrigger
+      render={
+        <Button
+          variant="ghost"
+          size="icon"
+          className="flex size-8 text-muted-foreground data-open:bg-muted"
+        />
+      }
+    >
+      <DotsThreeVerticalIcon />
+      <span className="sr-only">Open menu</span>
+    </DropdownMenuTrigger>
+
+    <DropdownMenuContent align="end" className="w-32">
+      <DropdownMenuItem onClick={() => setOpenEdit(true)}>
+        Chỉnh sửa
+      </DropdownMenuItem>
+
+      <DropdownMenuSeparator />
+
+      <DropdownMenuItem
+        onClick={() => handleDelete(row.original._id)}
+        variant="destructive"
+      >
+        Xoá
+      </DropdownMenuItem>
+    </DropdownMenuContent>
+  </DropdownMenu>
+
+  <UpdatePatientFormDialog
+    open={openEdit}
+    onOpenChange={setOpenEdit}
+    fetchPatients={getPatients}
+    dataUpdate={row.original}
+  />
+</>
+      ),
+    }),
+  ])
   const [data, setData] = React.useState(initialData)
   React.useEffect(() => {
     setData(initialData)
@@ -474,7 +491,7 @@ export function DataTable({
                 ))}
             </DropdownMenuContent>
           </DropdownMenu>
-          <PatientFormDialog fetchPatients={getPatients}/>
+          <PatientFormDialog fetchPatients={getPatients} />
         </div>
       </div>
       <TabsContent
@@ -564,7 +581,7 @@ export function DataTable({
               </Select>
             </div>
             <div className="flex w-fit items-center justify-center text-sm font-medium">
-              Trang {table.state.pagination.pageIndex + 1} trên {" "}
+              Trang {table.state.pagination.pageIndex + 1} trên{" "}
               {table.getPageCount()}
             </div>
             <div className="ml-auto flex items-center gap-2 lg:ml-0">
@@ -629,7 +646,6 @@ export function DataTable({
     </Tabs>
   )
 }
-
 
 function TableCellViewer({ item }: { item: Patient }) {
   const isMobile = useIsMobile()
