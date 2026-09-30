@@ -6,6 +6,7 @@ import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar"
 import { default as axios } from "axios"
 import { useEffect, useState } from "react"
 import { env } from "@/config/env.config"
+import { Spinner } from "@/components/ui/spinner"
 export type Gender = "MALE" | "FEMALE" | "OTHER"
 
 export interface IEmergencyContact {
@@ -29,6 +30,7 @@ export interface IPatient {
 
 const DashboardPage = () => {
   const [data, setData] = useState<IPatient[]>([])
+  const [loading, setLoading] = useState<boolean>(true)
 
   useEffect(() => {
     getPatients()
@@ -36,17 +38,24 @@ const DashboardPage = () => {
 
   const getPatients = async () => {
     try {
+      setLoading(false)
       const res = await axios.get(`${env.BE_URL}/patients`)
       console.log("yes")
       if (res) {
         setData(res.data.data)
       }
+      setLoading(false)
     } catch (error) {
+      setLoading(false)
       console.error("Get patients error:", error)
     }
   }
 
-  return (
+  return loading ? (
+    <div className="flex min-h-screen items-center justify-center">
+      <Spinner />
+    </div>
+  ) : (
     <SidebarProvider
       style={
         {
@@ -62,9 +71,12 @@ const DashboardPage = () => {
           <div className="@container/main flex flex-1 flex-col gap-2">
             <div className="flex flex-col gap-4 py-4 md:gap-6 md:py-6">
               <div className="px-4 lg:px-6">
-                <ChartAreaInteractive patients={data}/>
+                <ChartAreaInteractive patients={data} />
               </div>
-              <DataTable data={data} getPatients={getPatients} />
+              <DataTable
+                data={data}
+                getPatients={getPatients}
+              />
             </div>
           </div>
         </div>

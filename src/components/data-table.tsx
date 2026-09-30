@@ -98,8 +98,6 @@ import { env } from "@/config/env.config"
 
 import { toast } from "./ui/toast"
 
-// New in v9: declare the features this table uses — anything you don't
-// register is tree-shaken out of the bundle.
 const features = tableFeatures({
   columnFilteringFeature,
   columnVisibilityFeature,
@@ -309,43 +307,43 @@ export function DataTable({
       id: "actions",
       cell: ({ row }) => (
         <>
-  <DropdownMenu>
-    <DropdownMenuTrigger
-      render={
-        <Button
-          variant="ghost"
-          size="icon"
-          className="flex size-8 text-muted-foreground data-open:bg-muted"
-        />
-      }
-    >
-      <DotsThreeVerticalIcon />
-      <span className="sr-only">Open menu</span>
-    </DropdownMenuTrigger>
+          <DropdownMenu>
+            <DropdownMenuTrigger
+              render={
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="flex size-8 text-muted-foreground data-open:bg-muted"
+                />
+              }
+            >
+              <DotsThreeVerticalIcon />
+              <span className="sr-only">Open menu</span>
+            </DropdownMenuTrigger>
 
-    <DropdownMenuContent align="end" className="w-32">
-      <DropdownMenuItem onClick={() => setOpenEdit(true)}>
-        Chỉnh sửa
-      </DropdownMenuItem>
+            <DropdownMenuContent align="end" className="w-32">
+              <DropdownMenuItem onClick={() => setOpenEdit(true)}>
+                Chỉnh sửa
+              </DropdownMenuItem>
 
-      <DropdownMenuSeparator />
+              <DropdownMenuSeparator />
 
-      <DropdownMenuItem
-        onClick={() => handleDelete(row.original._id)}
-        variant="destructive"
-      >
-        Xoá
-      </DropdownMenuItem>
-    </DropdownMenuContent>
-  </DropdownMenu>
+              <DropdownMenuItem
+                onClick={() => handleDelete(row.original._id)}
+                variant="destructive"
+              >
+                Xoá
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
 
-  <UpdatePatientFormDialog
-    open={openEdit}
-    onOpenChange={setOpenEdit}
-    fetchPatients={getPatients}
-    dataUpdate={row.original}
-  />
-</>
+          <UpdatePatientFormDialog
+            open={openEdit}
+            onOpenChange={setOpenEdit}
+            fetchPatients={getPatients}
+            dataUpdate={row.original}
+          />
+        </>
       ),
     }),
   ])
@@ -417,6 +415,7 @@ export function DataTable({
   }
 
   return (
+    
     <Tabs
       defaultValue="outline"
       className="w-full flex-col justify-start gap-6"
