@@ -28,12 +28,29 @@ export interface IPatient {
   updatedAt: string
 }
 
+export interface Doctor {
+  _id: string
+  fullName: string
+  email: string
+  role: "DOCTOR" | "ADMIN"
+  status: "ACTIVE" | "INACTIVE"
+  permissions: {
+    patients: {
+      create: boolean
+      read: boolean
+      update: boolean
+      delete: boolean
+    }
+  }
+}
+
 const DashboardPage = () => {
   const [data, setData] = useState<IPatient[]>([])
   const [loading, setLoading] = useState<boolean>(true)
-
+  const [doctors, setDoctors] = useState<Doctor[]>([])
   useEffect(() => {
     getPatients()
+    getDoctors()
   }, [])
 
   const getPatients = async () => {
@@ -45,6 +62,21 @@ const DashboardPage = () => {
       }
     } catch (error) {
       console.error("Get patients error:", error)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+   const getDoctors = async () => {
+    try {
+      const res = await axios.get(`${env.BE_URL}/admin/manage-doctors`)
+      console.log("yes")
+      if (res) {
+        setDoctors(res.data.data)
+        console.log(res.data.data)
+      }
+    } catch (error) {
+      console.error("Get doctors error:", error)
     } finally {
       setLoading(false)
     }
@@ -75,7 +107,7 @@ const DashboardPage = () => {
               <div className="px-4 lg:px-6">
                 <ChartAreaInteractive patients={data} />
               </div>
-              <DataTable data={data} getPatients={getPatients} />
+              <DataTable getDoctors={getDoctors} doctors={doctors} setDoctors={setDoctors} data={data} getPatients={getPatients} />
             </div>
           </div>
         </div>

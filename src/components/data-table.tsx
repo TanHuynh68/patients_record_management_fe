@@ -97,6 +97,7 @@ import axios from "axios"
 import { env } from "@/config/env.config"
 
 import { toast } from "./ui/toast"
+import type { Doctor } from "@/pages/dashboard"
 
 const features = tableFeatures({
   columnFilteringFeature,
@@ -196,13 +197,49 @@ function DraggableRow({ row }: { row: Row<typeof features, Patient> }) {
     </TableRow>
   )
 }
+
 export function DataTable({
   data: initialData,
   getPatients,
+  doctors,
+  getDoctors,
 }: {
   data: z.infer<typeof schema>[]
   getPatients: any
+  doctors: Doctor[]
+  setDoctors: any
+  getDoctors: any
 }) {
+  // doctor
+
+  const [editingDoctor, setEditingDoctor] = React.useState<Doctor | null>(null)
+
+  const updateDoctor = async (doctor: Doctor) => {
+    try {
+      const res = await axios.patch(`${env.BE_URL}/admin/manage-doctors/${doctor._id}`, doctor)
+      if (res) {
+        getDoctors()
+        toast.add({ title: res.data.message })
+        setEditingDoctor(null)
+      }
+    } catch (error) {
+      console.error("updateDoctor error:", error)
+    } 
+  }
+
+  const deleteDoctor = async(id: string) => {
+    try {
+      const res = await axios.delete(`${env.BE_URL}/admin/manage-doctors/${id}`)
+      if (res) {
+        getDoctors()
+        toast.add({ title: res.data.message })
+        setEditingDoctor(null)
+      }
+    } catch (error) {
+      console.error("updateDoctor error:", error)
+    } 
+  }
+  //
   const [openEdit, setOpenEdit] = React.useState(false)
   const handleDelete = async (id: string) => {
     const res = await axios.delete(env.BE_URL + "/patients/" + id)
@@ -415,7 +452,6 @@ export function DataTable({
   }
 
   return (
-    
     <Tabs
       defaultValue="outline"
       className="w-full flex-col justify-start gap-6"
@@ -427,8 +463,8 @@ export function DataTable({
         <Select
           defaultValue="outline"
           items={[
-            { label: "Outline", value: "outline" },
-            { label: "Past Performance", value: "past-performance" },
+            { label: "Bệnh nhân", value: "outline" },
+            { label: "Bác sĩ", value: "past-performance" },
             { label: "Key Personnel", value: "key-personnel" },
             { label: "Focus Documents", value: "focus-documents" },
           ]}
@@ -442,17 +478,17 @@ export function DataTable({
           </SelectTrigger>
           <SelectContent>
             <SelectGroup>
-              <SelectItem value="outline">Outline</SelectItem>
-              <SelectItem value="past-performance">Past Performance</SelectItem>
+              <SelectItem value="outline">Bệnh nhân</SelectItem>
+              <SelectItem value="past-performance">Bác sĩ</SelectItem>
               <SelectItem value="key-personnel">Key Personnel</SelectItem>
               <SelectItem value="focus-documents">Focus Documents</SelectItem>
             </SelectGroup>
           </SelectContent>
         </Select>
         <TabsList className="hidden **:data-[slot=badge]:size-5 **:data-[slot=badge]:rounded-full **:data-[slot=badge]:bg-muted-foreground/30 **:data-[slot=badge]:px-1 @4xl/main:flex">
-          <TabsTrigger value="outline">Outline</TabsTrigger>
+          <TabsTrigger value="outline">Bệnh nhân</TabsTrigger>
           <TabsTrigger value="past-performance">
-            Past Performance <Badge variant="secondary">3</Badge>
+            Bác sĩ <Badge variant="secondary">3</Badge>
           </TabsTrigger>
           <TabsTrigger value="key-personnel">
             Key Personnel <Badge variant="secondary">2</Badge>
@@ -629,9 +665,190 @@ export function DataTable({
       </TabsContent>
       <TabsContent
         value="past-performance"
-        className="flex flex-col px-4 lg:px-6"
+        className="flex flex-col gap-4 px-4 lg:px-6"
       >
-        <div className="aspect-video w-full flex-1 rounded-lg border border-dashed"></div>
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="text-lg font-semibold">Danh sách bác sĩ</h2>
+            <p className="text-sm text-muted-foreground">
+              Quản lý thông tin và quyền truy cập của bác sĩ.
+            </p>
+          </div>
+          <span className="text-sm text-muted-foreground">
+            {doctors.length} bác sĩ
+          </span>
+        </div>
+
+        <div className="overflow-x-auto rounded-lg border">
+          <table className="w-full text-sm">
+            <thead className="border-b bg-muted/50 text-left">
+              <tr>
+                <th className="p-3">Họ tên</th>
+                <th className="p-3">Email</th>
+                <th className="p-3">Vai trò</th>
+                <th className="p-3">Trạng thái</th>
+                <th className="p-3 text-right">Thao tác</th>
+              </tr>
+            </thead>
+            <tbody>
+              {doctors.map((doctor) => (
+                <tr key={doctor._id} className="border-b last:border-0">
+                  <td className="p-3 font-medium">{doctor.fullName}</td>
+                  <td className="p-3 text-muted-foreground">{doctor.email}</td>
+                  <td className="p-3">
+                    {doctor.role === "DOCTOR" ? "Bác sĩ" : "Quản trị viên"}
+                  </td>
+                  <td className="p-3">
+                    <span
+                      className={
+                        doctor.status === "ACTIVE"
+                          ? "text-green-600"
+                          : "text-muted-foreground"
+                      }
+                    >
+                      {doctor.status === "ACTIVE"
+                        ? "Đang hoạt động"
+                        : "Đã khoá"}
+                    </span>
+                  </td>
+                  <td className="p-3 text-right">
+                    <div className="flex justify-end gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setEditingDoctor(doctor)}
+                      >
+                        Chỉnh sửa & phân quyền
+                      </Button>
+                      <Button
+                        variant="destructive"
+                        size="sm"
+                        onClick={() => deleteDoctor(doctor._id)}
+                      >
+                        Xoá
+                      </Button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+
+        {editingDoctor && (
+          <div className="rounded-lg border bg-card p-4">
+            <h3 className="mb-4 font-semibold">Chỉnh sửa bác sĩ</h3>
+            <div className="grid gap-4 md:grid-cols-2">
+              <label className="grid gap-2 text-sm">
+                Họ tên
+                <input
+                  className="rounded-md border bg-background px-3 py-2"
+                  value={editingDoctor.fullName}
+                  onChange={(event) =>
+                    setEditingDoctor({
+                      ...editingDoctor,
+                      fullName: event.target.value,
+                    })
+                  }
+                />
+              </label>
+              <label className="grid gap-2 text-sm">
+                Email
+                <input
+                  className="rounded-md border bg-background px-3 py-2"
+                  type="email"
+                  value={editingDoctor.email}
+                  onChange={(event) =>
+                    setEditingDoctor({
+                      ...editingDoctor,
+                      email: event.target.value,
+                    })
+                  }
+                />
+              </label>
+              <label className="grid gap-2 text-sm">
+                Vai trò
+                <select
+                disabled={true}
+                  className="rounded-md border bg-background px-3 py-2"
+                  value={editingDoctor.role}
+                  onChange={(event) =>
+                    setEditingDoctor({
+                      ...editingDoctor,
+                      role: event.target.value as Doctor["role"],
+                    })
+                  }
+                >
+                  <option value="DOCTOR">Bác sĩ</option>
+                  <option value="ADMIN">Quản trị viên</option>
+                </select>
+              </label>
+              <label className="grid gap-2 text-sm">
+                Trạng thái
+                <select
+                  className="rounded-md border bg-background px-3 py-2"
+                  value={editingDoctor.status}
+                  onChange={(event) =>
+                    setEditingDoctor({
+                      ...editingDoctor,
+                      status: event.target.value as Doctor["status"],
+                    })
+                  }
+                >
+                  <option value="ACTIVE">Đang hoạt động</option>
+                  <option value="INACTIVE">Đã khoá</option>
+                </select>
+              </label>
+            </div>
+
+            <fieldset className="mt-5 grid gap-3">
+              <legend className="font-medium">Phân quyền bệnh nhân</legend>
+              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+                {(["create", "read", "update", "delete"] as const).map(
+                  (permission) => (
+                    <label
+                      key={permission}
+                      className="flex items-center gap-2 text-sm"
+                    >
+                      <input
+                        type="checkbox"
+                        checked={editingDoctor.permissions.patients[permission]}
+                        onChange={(event) =>
+                          setEditingDoctor({
+                            ...editingDoctor,
+                            permissions: {
+                              ...editingDoctor.permissions,
+                              patients: {
+                                ...editingDoctor.permissions.patients,
+                                [permission]: event.target.checked,
+                              },
+                            },
+                          })
+                        }
+                      />
+                      {permission === "create"
+                        ? "Thêm"
+                        : permission === "read"
+                          ? "Xem"
+                          : permission === "update"
+                            ? "Sửa"
+                            : "Xoá"}
+                    </label>
+                  )
+                )}
+              </div>
+            </fieldset>
+
+            <div className="mt-5 flex justify-end gap-2">
+              <Button variant="outline" onClick={() => setEditingDoctor(null)}>
+                Huỷ
+              </Button>
+              <Button onClick={() => updateDoctor(editingDoctor)}>
+                Lưu thay đổi
+              </Button>
+            </div>
+          </div>
+        )}
       </TabsContent>
       <TabsContent value="key-personnel" className="flex flex-col px-4 lg:px-6">
         <div className="aspect-video w-full flex-1 rounded-lg border border-dashed"></div>
