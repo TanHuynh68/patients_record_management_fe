@@ -97,7 +97,8 @@ import axios from "axios"
 import { env } from "@/config/env.config"
 
 import { toast } from "./ui/toast"
-import type { Doctor } from "@/pages/dashboard"
+import type { Doctor } from "@/pages/dashboard/dashboard"
+import DoctorCreateDialog, { type DoctorFormValues } from "./create-doctor-dialog"
 
 const features = tableFeatures({
   columnFilteringFeature,
@@ -216,7 +217,10 @@ export function DataTable({
 
   const updateDoctor = async (doctor: Doctor) => {
     try {
-      const res = await axios.patch(`${env.BE_URL}/admin/manage-doctors/${doctor._id}`, doctor)
+      const res = await axios.patch(
+        `${env.BE_URL}/admin/manage-doctors/${doctor._id}`,
+        doctor
+      )
       if (res) {
         getDoctors()
         toast.add({ title: res.data.message })
@@ -224,10 +228,10 @@ export function DataTable({
       }
     } catch (error) {
       console.error("updateDoctor error:", error)
-    } 
+    }
   }
 
-  const deleteDoctor = async(id: string) => {
+  const deleteDoctor = async (id: string) => {
     try {
       const res = await axios.delete(`${env.BE_URL}/admin/manage-doctors/${id}`)
       if (res) {
@@ -237,7 +241,7 @@ export function DataTable({
       }
     } catch (error) {
       console.error("updateDoctor error:", error)
-    } 
+    }
   }
   //
   const [openEdit, setOpenEdit] = React.useState(false)
@@ -439,6 +443,19 @@ export function DataTable({
     }
   }
 
+  const handleCreateDoctor = async (values: DoctorFormValues) => {
+    try {
+      const res = await axios.post(`${env.BE_URL}/admin/manage-doctors`, values);
+      if (res) {
+        toast.add({title: res.data.message})
+        getDoctors();
+        return res;
+      }
+    } catch (error) {
+      console.error("Get patients error:", error)
+    } 
+  }
+
   const columnLabels: Record<string, string> = {
     fullName: "Họ và tên",
     email: "Email",
@@ -465,8 +482,6 @@ export function DataTable({
           items={[
             { label: "Bệnh nhân", value: "outline" },
             { label: "Bác sĩ", value: "past-performance" },
-            { label: "Key Personnel", value: "key-personnel" },
-            { label: "Focus Documents", value: "focus-documents" },
           ]}
         >
           <SelectTrigger
@@ -480,20 +495,14 @@ export function DataTable({
             <SelectGroup>
               <SelectItem value="outline">Bệnh nhân</SelectItem>
               <SelectItem value="past-performance">Bác sĩ</SelectItem>
-              <SelectItem value="key-personnel">Key Personnel</SelectItem>
-              <SelectItem value="focus-documents">Focus Documents</SelectItem>
             </SelectGroup>
           </SelectContent>
         </Select>
         <TabsList className="hidden **:data-[slot=badge]:size-5 **:data-[slot=badge]:rounded-full **:data-[slot=badge]:bg-muted-foreground/30 **:data-[slot=badge]:px-1 @4xl/main:flex">
           <TabsTrigger value="outline">Bệnh nhân</TabsTrigger>
           <TabsTrigger value="past-performance">
-            Bác sĩ <Badge variant="secondary">3</Badge>
+            Bác sĩ 
           </TabsTrigger>
-          <TabsTrigger value="key-personnel">
-            Key Personnel <Badge variant="secondary">2</Badge>
-          </TabsTrigger>
-          <TabsTrigger value="focus-documents">Focus Documents</TabsTrigger>
         </TabsList>
         <div className="flex items-center gap-2">
           <DropdownMenu>
@@ -527,6 +536,7 @@ export function DataTable({
             </DropdownMenuContent>
           </DropdownMenu>
           <PatientFormDialog fetchPatients={getPatients} />
+          <DoctorCreateDialog onCreate={handleCreateDoctor} />
         </div>
       </div>
       <TabsContent
@@ -769,7 +779,7 @@ export function DataTable({
               <label className="grid gap-2 text-sm">
                 Vai trò
                 <select
-                disabled={true}
+                  disabled={true}
                   className="rounded-md border bg-background px-3 py-2"
                   value={editingDoctor.role}
                   onChange={(event) =>
