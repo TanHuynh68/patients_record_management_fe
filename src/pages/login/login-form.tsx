@@ -7,12 +7,14 @@ import { env } from "@/config/env.config"
 import axios from "axios"
 import { toast } from "@/components/ui/toast"
 import { useNavigate } from "react-router-dom"
+import { useAuth } from "@/context/auth.context"
 
 export function LoginForm({
   className,
   ...props
 }: React.ComponentProps<"form">) {
   const navigate = useNavigate();
+  const { login } = useAuth();
   const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
 
@@ -49,8 +51,8 @@ export function LoginForm({
         toast.add({
           title: res.data.message || "Đăng nhập thành công",
         })
-        localStorage.setItem("accessToken", res.data.accessToken)
-        localStorage.setItem("user", JSON.stringify(res.data.user))
+        login(res.data.user);
+        localStorage.setItem('accessToken', res.data.accessToken)
         navigate('/')
       }
     } catch (error: unknown) {
@@ -98,13 +100,6 @@ export function LoginForm({
         <Field>
           <div className="flex items-center">
             <FieldLabel htmlFor="password">Mật khẩu</FieldLabel>
-
-            <a
-              href="/forgot-password"
-              className="ml-auto text-sm underline-offset-4 hover:underline"
-            >
-              Quên mật khẩu?
-            </a>
           </div>
 
           <Input

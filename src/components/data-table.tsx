@@ -98,7 +98,9 @@ import { env } from "@/config/env.config"
 
 import { toast } from "./ui/toast"
 import type { Doctor } from "@/pages/dashboard/dashboard"
-import DoctorCreateDialog, { type DoctorFormValues } from "./create-doctor-dialog"
+import DoctorCreateDialog, {
+  type DoctorFormValues,
+} from "./create-doctor-dialog"
 
 const features = tableFeatures({
   columnFilteringFeature,
@@ -214,7 +216,7 @@ export function DataTable({
   // doctor
 
   const [editingDoctor, setEditingDoctor] = React.useState<Doctor | null>(null)
-
+  const userData = JSON.parse(localStorage.getItem("user") || "{}")
   const updateDoctor = async (doctor: Doctor) => {
     try {
       const res = await axios.patch(
@@ -445,15 +447,15 @@ export function DataTable({
 
   const handleCreateDoctor = async (values: DoctorFormValues) => {
     try {
-      const res = await axios.post(`${env.BE_URL}/admin/manage-doctors`, values);
+      const res = await axios.post(`${env.BE_URL}/admin/manage-doctors`, values)
       if (res) {
-        toast.add({title: res.data.message})
-        getDoctors();
-        return res;
+        toast.add({ title: res.data.message })
+        getDoctors()
+        return res
       }
     } catch (error) {
       console.error("Get patients error:", error)
-    } 
+    }
   }
 
   const columnLabels: Record<string, string> = {
@@ -500,9 +502,9 @@ export function DataTable({
         </Select>
         <TabsList className="hidden **:data-[slot=badge]:size-5 **:data-[slot=badge]:rounded-full **:data-[slot=badge]:bg-muted-foreground/30 **:data-[slot=badge]:px-1 @4xl/main:flex">
           <TabsTrigger value="outline">Bệnh nhân</TabsTrigger>
-          <TabsTrigger value="past-performance">
-            Bác sĩ 
-          </TabsTrigger>
+          {userData.role != "DOCTOR" && (
+            <TabsTrigger value="past-performance">Bác sĩ</TabsTrigger>
+          )}
         </TabsList>
         <div className="flex items-center gap-2">
           <DropdownMenu>

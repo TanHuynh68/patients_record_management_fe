@@ -71,7 +71,7 @@ export function DoctorCreateDialog({ onCreate }: DoctorCreateDialogProps) {
   const [errors, setErrors] = useState<FormErrors>({})
   const [submitError, setSubmitError] = useState("")
   const [isSubmitting, setIsSubmitting] = useState(false)
-
+ const userData = JSON.parse(localStorage.getItem("user") || "{}");
   function updateField(field: keyof DoctorFormValues, value: string) {
     setValues((current) => ({ ...current, [field]: value }))
     setErrors((current) => ({ ...current, [field]: undefined }))
@@ -122,7 +122,7 @@ export function DoctorCreateDialog({ onCreate }: DoctorCreateDialogProps) {
   }
 
   return (
-    <Dialog open={open} onOpenChange={handleOpenChange}>
+    userData.role === 'ADMIN' &&   <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogTrigger>
         <Button variant="outline" size="sm">
           <PlusIcon data-icon="inline-start" />
