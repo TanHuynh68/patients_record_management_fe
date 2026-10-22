@@ -84,8 +84,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import {
   DotsSixVerticalIcon,
   DotsThreeVerticalIcon,
-  ColumnsIcon,
-  CaretDownIcon,
   CaretDoubleLeftIcon,
   CaretLeftIcon,
   CaretRightIcon,
@@ -101,6 +99,7 @@ import type { Doctor } from "@/pages/dashboard/dashboard"
 import DoctorCreateDialog, {
   type DoctorFormValues,
 } from "./create-doctor-dialog"
+import { useAuth } from "@/context/auth.context"
 
 const features = tableFeatures({
   columnFilteringFeature,
@@ -213,6 +212,7 @@ export function DataTable({
   setDoctors: any
   getDoctors: any
 }) {
+  const {user} =useAuth()
   // doctor
 
   const [editingDoctor, setEditingDoctor] = React.useState<Doctor | null>(null)
@@ -232,7 +232,7 @@ export function DataTable({
       console.error("updateDoctor error:", error)
     }
   }
-
+  
   const deleteDoctor = async (id: string) => {
     try {
       const res = await axios.delete(`${env.BE_URL}/admin/manage-doctors/${id}`)
@@ -246,9 +246,22 @@ export function DataTable({
     }
   }
   //
-  const [openEdit, setOpenEdit] = React.useState(false)
-  const handleDelete = async (id: string) => {
-    const res = await axios.delete(env.BE_URL + "/patients/" + id)
+  const [editingPatient, setEditingPatient] = React.useState<Patient | null>(null)
+
+  const handleEditPatient = (patient: Patient) => {
+    if(user && user.role!='ADMIN' && user?.permissions.update === false){
+      toast.add({title:  "Bạn không có quyền chỉnh sửa bệnh nhân, hãy liên hệ với admin để cấp quyền"})
+      return;
+    }
+    setEditingPatient(patient)
+  }
+
+  const handleDeletePatient = async(id: string) => {
+    if(user && user.role!='ADMIN' && user?.permissions.delete === false){
+      toast.add({title:  "Bạn không có quyền xoá bệnh nhân, hãy liên hệ với admin để cấp quyền"})
+      return;
+    }
+     const res = await axios.delete(env.BE_URL + "/patients/" + id)
     if (res && res.data.success) {
       toast.add({ title: res.data.message })
       getPatients()
@@ -365,14 +378,14 @@ export function DataTable({
             </DropdownMenuTrigger>
 
             <DropdownMenuContent align="end" className="w-32">
-              <DropdownMenuItem onClick={() => setOpenEdit(true)}>
+                <DropdownMenuItem onClick={() => handleEditPatient(row.original)}>
                 Chỉnh sửa
               </DropdownMenuItem>
 
               <DropdownMenuSeparator />
 
               <DropdownMenuItem
-                onClick={() => handleDelete(row.original._id)}
+                onClick={() => handleDeletePatient(row.original._id)}
                 variant="destructive"
               >
                 Xoá
@@ -380,12 +393,6 @@ export function DataTable({
             </DropdownMenuContent>
           </DropdownMenu>
 
-          <UpdatePatientFormDialog
-            open={openEdit}
-            onOpenChange={setOpenEdit}
-            fetchPatients={getPatients}
-            dataUpdate={row.original}
-          />
         </>
       ),
     }),
@@ -508,13 +515,13 @@ export function DataTable({
         </TabsList>
         <div className="flex items-center gap-2">
           <DropdownMenu>
-            <DropdownMenuTrigger
+            {/* <DropdownMenuTrigger
               render={<Button variant="outline" size="sm" />}
             >
               <ColumnsIcon data-icon="inline-start" />
               Cột
               <CaretDownIcon data-icon="inline-end" />
-            </DropdownMenuTrigger>
+            </DropdownMenuTrigger> */}
             <DropdownMenuContent align="end" className="w-40">
               {table
                 .getAllColumns()
@@ -675,6 +682,18 @@ export function DataTable({
           </div>
         </div>
       </TabsContent>
+
+      {editingPatient && (
+        <UpdatePatientFormDialog
+          open={true}
+          onOpenChange={(open) => {
+            if (!open) setEditingPatient(null)
+          }}
+          fetchPatients={getPatients}
+          dataUpdate={editingPatient}
+        />
+      )}
+
       <TabsContent
         value="past-performance"
         className="flex flex-col gap-4 px-4 lg:px-6"
@@ -822,22 +841,46 @@ export function DataTable({
                       key={permission}
                       className="flex items-center gap-2 text-sm"
                     >
-                      <input
-                        type="checkbox"
-                        checked={editingDoctor.permissions.patients[permission]}
-                        onChange={(event) =>
-                          setEditingDoctor({
-                            ...editingDoctor,
-                            permissions: {
-                              ...editingDoctor.permissions,
-                              patients: {
-                                ...editingDoctor.permissions.patients,
-                                [permission]: event.target.checked,
+                      {permission != "read" ? (
+                        <input
+                          type="checkbox"
+                          checked={
+                            editingDoctor.permissions.patients[permission]
+                          }
+                          onChange={(event) =>
+                            setEditingDoctor({
+                              ...editingDoctor,
+                              permissions: {
+                                ...editingDoctor.permissions,
+                                patients: {
+                                  ...editingDoctor.permissions.patients,
+                                  [permission]: event.target.checked,
+                                },
                               },
-                            },
-                          })
-                        }
-                      />
+                            })
+                          }
+                        />
+                      ) : (
+                        <input
+                          disabled
+                          type="checkbox"
+                          checked={
+                            editingDoctor.permissions.patients[permission]
+                          }
+                          onChange={(event) =>
+                            setEditingDoctor({
+                              ...editingDoctor,
+                              permissions: {
+                                ...editingDoctor.permissions,
+                                patients: {
+                                  ...editingDoctor.permissions.patients,
+                                  [permission]: event.target.checked,
+                                },
+                              },
+                            })
+                          }
+                        />
+                      )}
                       {permission === "create"
                         ? "Thêm"
                         : permission === "read"

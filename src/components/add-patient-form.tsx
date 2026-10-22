@@ -11,7 +11,6 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog"
 import {
   Field,
@@ -34,6 +33,7 @@ import { Textarea } from "@/components/ui/textarea"
 import axios from "axios"
 import { env } from "@/config/env.config"
 import { toast } from "./ui/toast"
+import { useAuth } from "@/context/auth.context"
 
 type FormValues = {
   fullName: string
@@ -85,16 +85,11 @@ function validate(values: FormValues): Errors {
   return errors
 }
 
-export function PatientFormDialog({
-  fetchPatients,
-}: {
-  fetchPatients: any
-}) {
+export function PatientFormDialog({ fetchPatients }: { fetchPatients: any }) {
   const [open, setOpen] = useState(false)
   const [values, setValues] = useState(initialValues)
   const [errors, setErrors] = useState<Errors>({})
-
-
+  const { user } = useAuth()
 
   function update(field: keyof FormValues, value: string) {
     setValues((current) => ({ ...current, [field]: value }))
@@ -137,196 +132,210 @@ export function PatientFormDialog({
       toast.add({ title: res.data.message })
     }
   }
- 
-  return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger
-        render={
-          <Button variant="outline" size="sm">
-            <PlusIcon data-icon="inline-start" />
-            <span className="hidden lg:inline">Thêm bệnh nhân</span>
-            <span className="lg:hidden">Thêm</span>
-          </Button>
-        }
-      />
-      <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-2xl">
-        <DialogHeader>
-          <DialogTitle>Thêm bệnh nhân</DialogTitle>
-          <DialogDescription>
-            Nhập thông tin bệnh nhân và người liên hệ khẩn cấp.
-          </DialogDescription>
-        </DialogHeader>
 
-        <form onSubmit={handleSubmit} noValidate>
-          <FieldGroup>
-            <FieldSet>
-              <FieldLegend>Thông tin bệnh nhân</FieldLegend>
-              <FieldGroup className="grid gap-4 sm:grid-cols-2">
-                <Field data-invalid={!!errors.fullName}>
-                  <FieldLabel htmlFor="fullName">
-                    Họ và tên <span aria-hidden="true">*</span>
-                  </FieldLabel>
-                  <Input
-                    id="fullName"
-                    value={values.fullName}
-                    onChange={(event) => update("fullName", event.target.value)}
-                    aria-invalid={!!errors.fullName}
-                    placeholder="Nguyễn Văn An"
-                    autoComplete="name"
-                  />
-                  <FieldError>{errors.fullName}</FieldError>
-                </Field>
-                <Field data-invalid={!!errors.dateOfBirth}>
-                  <FieldLabel htmlFor="dateOfBirth">
-                    Ngày sinh <span aria-hidden="true">*</span>
-                  </FieldLabel>
-                  <Input
-                    id="dateOfBirth"
-                    type="date"
-                    value={values.dateOfBirth}
-                    onChange={(event) =>
-                      update("dateOfBirth", event.target.value)
-                    }
-                    aria-invalid={!!errors.dateOfBirth}
-                  />
-                  <FieldError>{errors.dateOfBirth}</FieldError>
-                </Field>
-                <Field data-invalid={!!errors.gender}>
-                  <FieldLabel htmlFor="gender">
-                    Giới tính <span aria-hidden="true">*</span>
-                  </FieldLabel>
-                  <Select
-                    value={
-                      values.gender === "MALE"
-                        ? "Nam"
-                        : values.gender === "FEMALE"
-                          ? "Nữ"
-                          : ""
-                    }
-                    onValueChange={(value) => update("gender", value ?? "")}
-                  >
-                    <SelectTrigger
-                      id="gender"
-                      className="w-full"
-                      aria-invalid={!!errors.gender}
-                    >
-                      <SelectValue placeholder="Chọn giới tính" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="MALE">Nam</SelectItem>
-                      <SelectItem value="FEMALE">Nữ</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <FieldError>{errors.gender}</FieldError>
-                </Field>
-                <Field data-invalid={!!errors.phone}>
-                  <FieldLabel htmlFor="phone">
-                    Số điện thoại <span aria-hidden="true">*</span>
-                  </FieldLabel>
-                  <Input
-                    id="phone"
-                    type="tel"
-                    value={values.phone}
-                    onChange={(event) => update("phone", event.target.value)}
-                    aria-invalid={!!errors.phone}
-                    placeholder="0901 234 567"
-                    autoComplete="tel"
-                  />
-                  <FieldError>{errors.phone}</FieldError>
-                </Field>
-                <Field
-                  data-invalid={!!errors.address}
-                  className="sm:col-span-2"
-                >
-                  <FieldLabel htmlFor="address">
-                    Địa chỉ <span aria-hidden="true">*</span>
-                  </FieldLabel>
-                  <Textarea
-                    id="address"
-                    value={values.address}
-                    onChange={(event) => update("address", event.target.value)}
-                    aria-invalid={!!errors.address}
-                    placeholder="Số nhà, đường, phường/xã, tỉnh/thành phố"
-                    rows={2}
-                  />
-                  <FieldError>{errors.address}</FieldError>
-                </Field>
-              </FieldGroup>
-            </FieldSet>
+    const handleOpen = () => {
+      if (user && user.role !== "ADMIN" && user.permissions.create === false) {
+        setOpen(false)
 
-            <FieldSet>
-              <FieldLegend>Người liên hệ khẩn cấp</FieldLegend>
-              <FieldDescription>
-                Thông tin này được dùng khi cần liên hệ trong trường hợp khẩn
-                cấp.
-              </FieldDescription>
-              <FieldGroup className="grid gap-4 sm:grid-cols-2">
-                <Field data-invalid={!!errors.emergencyFullName}>
-                  <FieldLabel htmlFor="emergencyFullName">
-                    Họ và tên <span aria-hidden="true">*</span>
-                  </FieldLabel>
-                  <Input
-                    id="emergencyFullName"
-                    value={values.emergencyFullName}
-                    onChange={(event) =>
-                      update("emergencyFullName", event.target.value)
-                    }
-                    aria-invalid={!!errors.emergencyFullName}
-                    placeholder="Nguyễn Thị B"
-                    autoComplete="name"
-                  />
-                  <FieldError>{errors.emergencyFullName}</FieldError>
-                </Field>
-                <Field data-invalid={!!errors.emergencyPhone}>
-                  <FieldLabel htmlFor="emergencyPhone">
-                    Số điện thoại <span aria-hidden="true">*</span>
-                  </FieldLabel>
-                  <Input
-                    id="emergencyPhone"
-                    type="tel"
-                    value={values.emergencyPhone}
-                    onChange={(event) =>
-                      update("emergencyPhone", event.target.value)
-                    }
-                    aria-invalid={!!errors.emergencyPhone}
-                    placeholder="0909 876 543"
-                    autoComplete="tel"
-                  />
-                  <FieldError>{errors.emergencyPhone}</FieldError>
-                </Field>
-                <Field data-invalid={!!errors.relationship}>
-                  <FieldLabel htmlFor="relationship">
-                    Mối quan hệ <span aria-hidden="true">*</span>
-                  </FieldLabel>
-                  <Input
-                    id="relationship"
-                    value={values.relationship}
-                    onChange={(event) =>
-                      update("relationship", event.target.value)
-                    }
-                    aria-invalid={!!errors.relationship}
-                    placeholder="Mẹ"
-                  />
-                  <FieldError>{errors.relationship}</FieldError>
-                </Field>
-              </FieldGroup>
-            </FieldSet>
-          </FieldGroup>
+        toast.add({
+          title:
+            "Bạn không có quyền thêm bệnh nhân, hãy liên hệ với admin để cấp quyền",
+        })
 
-          <DialogFooter className="mt-6">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => setOpen(false)}
-            >
-              Hủy
+        return
+      }
+
+      setOpen(true)
+    }
+    return (
+      <Dialog open={open} onOpenChange={setOpen}>
+        <Button variant="outline" size="sm" onClick={handleOpen}>
+              <PlusIcon data-icon="inline-start" />
+              <span className="hidden lg:inline">Thêm bệnh nhân</span>
+              <span className="lg:hidden">Thêm</span>
             </Button>
-            <Button type="submit">Lưu bệnh nhân</Button>
-          </DialogFooter>
-        </form>
-      </DialogContent>
-    </Dialog>
-  )
-}
+        <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Thêm bệnh nhân</DialogTitle>
+            <DialogDescription>
+              Nhập thông tin bệnh nhân và người liên hệ khẩn cấp.
+            </DialogDescription>
+          </DialogHeader>
+
+          <form onSubmit={handleSubmit} noValidate>
+            <FieldGroup>
+              <FieldSet>
+                <FieldLegend>Thông tin bệnh nhân</FieldLegend>
+                <FieldGroup className="grid gap-4 sm:grid-cols-2">
+                  <Field data-invalid={!!errors.fullName}>
+                    <FieldLabel htmlFor="fullName">
+                      Họ và tên <span aria-hidden="true">*</span>
+                    </FieldLabel>
+                    <Input
+                      id="fullName"
+                      value={values.fullName}
+                      onChange={(event) =>
+                        update("fullName", event.target.value)
+                      }
+                      aria-invalid={!!errors.fullName}
+                      placeholder="Nguyễn Văn An"
+                      autoComplete="name"
+                    />
+                    <FieldError>{errors.fullName}</FieldError>
+                  </Field>
+                  <Field data-invalid={!!errors.dateOfBirth}>
+                    <FieldLabel htmlFor="dateOfBirth">
+                      Ngày sinh <span aria-hidden="true">*</span>
+                    </FieldLabel>
+                    <Input
+                      id="dateOfBirth"
+                      type="date"
+                      value={values.dateOfBirth}
+                      onChange={(event) =>
+                        update("dateOfBirth", event.target.value)
+                      }
+                      aria-invalid={!!errors.dateOfBirth}
+                    />
+                    <FieldError>{errors.dateOfBirth}</FieldError>
+                  </Field>
+                  <Field data-invalid={!!errors.gender}>
+                    <FieldLabel htmlFor="gender">
+                      Giới tính <span aria-hidden="true">*</span>
+                    </FieldLabel>
+                    <Select
+                      value={
+                        values.gender === "MALE"
+                          ? "Nam"
+                          : values.gender === "FEMALE"
+                            ? "Nữ"
+                            : ""
+                      }
+                      onValueChange={(value) => update("gender", value ?? "")}
+                    >
+                      <SelectTrigger
+                        id="gender"
+                        className="w-full"
+                        aria-invalid={!!errors.gender}
+                      >
+                        <SelectValue placeholder="Chọn giới tính" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="MALE">Nam</SelectItem>
+                        <SelectItem value="FEMALE">Nữ</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <FieldError>{errors.gender}</FieldError>
+                  </Field>
+                  <Field data-invalid={!!errors.phone}>
+                    <FieldLabel htmlFor="phone">
+                      Số điện thoại <span aria-hidden="true">*</span>
+                    </FieldLabel>
+                    <Input
+                      id="phone"
+                      type="tel"
+                      value={values.phone}
+                      onChange={(event) => update("phone", event.target.value)}
+                      aria-invalid={!!errors.phone}
+                      placeholder="0901 234 567"
+                      autoComplete="tel"
+                    />
+                    <FieldError>{errors.phone}</FieldError>
+                  </Field>
+                  <Field
+                    data-invalid={!!errors.address}
+                    className="sm:col-span-2"
+                  >
+                    <FieldLabel htmlFor="address">
+                      Địa chỉ <span aria-hidden="true">*</span>
+                    </FieldLabel>
+                    <Textarea
+                      id="address"
+                      value={values.address}
+                      onChange={(event) =>
+                        update("address", event.target.value)
+                      }
+                      aria-invalid={!!errors.address}
+                      placeholder="Số nhà, đường, phường/xã, tỉnh/thành phố"
+                      rows={2}
+                    />
+                    <FieldError>{errors.address}</FieldError>
+                  </Field>
+                </FieldGroup>
+              </FieldSet>
+
+              <FieldSet>
+                <FieldLegend>Người liên hệ khẩn cấp</FieldLegend>
+                <FieldDescription>
+                  Thông tin này được dùng khi cần liên hệ trong trường hợp khẩn
+                  cấp.
+                </FieldDescription>
+                <FieldGroup className="grid gap-4 sm:grid-cols-2">
+                  <Field data-invalid={!!errors.emergencyFullName}>
+                    <FieldLabel htmlFor="emergencyFullName">
+                      Họ và tên <span aria-hidden="true">*</span>
+                    </FieldLabel>
+                    <Input
+                      id="emergencyFullName"
+                      value={values.emergencyFullName}
+                      onChange={(event) =>
+                        update("emergencyFullName", event.target.value)
+                      }
+                      aria-invalid={!!errors.emergencyFullName}
+                      placeholder="Nguyễn Thị B"
+                      autoComplete="name"
+                    />
+                    <FieldError>{errors.emergencyFullName}</FieldError>
+                  </Field>
+                  <Field data-invalid={!!errors.emergencyPhone}>
+                    <FieldLabel htmlFor="emergencyPhone">
+                      Số điện thoại <span aria-hidden="true">*</span>
+                    </FieldLabel>
+                    <Input
+                      id="emergencyPhone"
+                      type="tel"
+                      value={values.emergencyPhone}
+                      onChange={(event) =>
+                        update("emergencyPhone", event.target.value)
+                      }
+                      aria-invalid={!!errors.emergencyPhone}
+                      placeholder="0909 876 543"
+                      autoComplete="tel"
+                    />
+                    <FieldError>{errors.emergencyPhone}</FieldError>
+                  </Field>
+                  <Field data-invalid={!!errors.relationship}>
+                    <FieldLabel htmlFor="relationship">
+                      Mối quan hệ <span aria-hidden="true">*</span>
+                    </FieldLabel>
+                    <Input
+                      id="relationship"
+                      value={values.relationship}
+                      onChange={(event) =>
+                        update("relationship", event.target.value)
+                      }
+                      aria-invalid={!!errors.relationship}
+                      placeholder="Mẹ"
+                    />
+                    <FieldError>{errors.relationship}</FieldError>
+                  </Field>
+                </FieldGroup>
+              </FieldSet>
+            </FieldGroup>
+
+            <DialogFooter className="mt-6">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setOpen(false)}
+              >
+                Hủy
+              </Button>
+              <Button type="submit">Lưu bệnh nhân</Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+    )
+  }
 
 export default PatientFormDialog

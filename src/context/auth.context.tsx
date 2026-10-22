@@ -10,6 +10,13 @@ interface User {
   fullName: string;
   email: string;
   role: string
+  permissions: {
+    create: boolean,
+    read: boolean,
+    update: boolean,
+    delete: boolean,
+  },
+  id: string
 }
 
 interface AuthContextType {
